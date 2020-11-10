@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"startup-funding/auth"
 	"startup-funding/handler"
@@ -23,6 +24,7 @@ func main() {
 	userRepository := user.NewRepository(db)
 	userService := user.NewService(userRepository)
 	authService := auth.NewService()
+	
 	userHandler := handler.NewUserHandler(userService, authService)
 
 	router := gin.Default()
