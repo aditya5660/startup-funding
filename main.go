@@ -3,11 +3,15 @@ package main
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"startup-funding/auth"
 	"startup-funding/handler"
+	"startup-funding/helper"
 	"startup-funding/user"
+	"strings"
 
+	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	"gorm.io/driver/mysql"
@@ -48,6 +52,49 @@ func main() {
 	api.POST("/sessions", userHandler.Login)
 	api.POST("/users/fetch", userHandler.Fetch)
 	api.POST("/email_checkers", userHandler.CheckEmailAvailability)
-	api.POST("/avatars", userHandler.UploadAvatar)
+	api.POST("/avatars", authMiddleware(authService, userService), userHandler.UploadAvatar)
 	router.Run()
+}
+func authMiddleware(authService auth.Service, userService user.Service) gin.HandlerFunc {
+
+	return func(c *gin.Context) {
+		// get header Authorization: Bearer
+		authHeader := c.GetHeader("Authorization")
+		if !strings.Contains(authHeader, "Bearer") {
+			response := helper.APIResponse("Unauthorize", http.StatusUnauthorized, "error", nil)
+			c.AbortWithStatusJSON(http.StatusUnauthorized, response)
+			return
+		}
+		// get token only from authHeader
+		// Bearer token
+		tokenString := ""
+		tokenArray := strings.Split(authHeader, " ")
+		if len(tokenArray) == 2 {
+			tokenString = tokenArray[1]
+		}
+		token, err := authService.ValidateToken(tokenString)
+		if err != nil {
+			response := helper.APIResponse("Unauthorize", http.StatusUnauthorized, "error", nil)
+			c.AbortWithStatusJSON(http.StatusUnauthorized, response)
+			return
+		}
+		// get data on token
+		claim, ok := token.Claims.(jwt.MapClaims)
+		if !ok || !token.Valid {
+			response := helper.APIResponse("Unauthorize", http.StatusUnauthorized, "error", nil)
+			c.AbortWithStatusJSON(http.StatusUnauthorized, response)
+			return
+		}
+		// get user id
+		userID := int(claim["user_id"].(float64))
+		// get user data
+		user, err := userService.GetUserByID(userID)
+		if err != nil {
+			response := helper.APIResponse("Unauthorize", http.StatusUnauthorized, "error", nil)
+			c.AbortWithStatusJSON(http.StatusUnauthorized, response)
+			return
+		}
+		// set context value user
+		c.Set("CurrentUser", user)
+	}
 }
