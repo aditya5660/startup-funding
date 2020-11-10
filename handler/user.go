@@ -16,7 +16,7 @@ func NewUserHandler(userService user.Service) *userHandler {
 	return &userHandler{userService}
 }
 
-func (h *userHandler) RegisterUser(c *gin.Context) {
+func (h *userHandler) Register(c *gin.Context) {
 	// get input from form data
 	var input user.RegisterUserInput
 	// map input from user to struct Register User Input and validate input
@@ -24,7 +24,7 @@ func (h *userHandler) RegisterUser(c *gin.Context) {
 	if err != nil {
 		errors := helper.FormatValidationError(err)
 		errorMessage := gin.H{"errors": errors}
-		response := helper.APIResponse("Register Account failer", http.StatusUnprocessableEntity, "error", errorMessage)
+		response := helper.APIResponse("Register Account failed", http.StatusUnprocessableEntity, "error", errorMessage)
 		c.JSON(http.StatusBadRequest, response)
 		return
 	}
@@ -38,10 +38,42 @@ func (h *userHandler) RegisterUser(c *gin.Context) {
 	}
 	// get token
 	// token,err := h.jwtService.GenerateToken()
-	// transform response
+	// format response
 	formatter := user.FormatUser(newUser, "asdasduhquwehasdkfjokjASDJKOJAORIJA;KLFSDJGOIERFIUHAKJSDNFKJNWEOIDRJOADNSLKJASL;KD")
 	// api response
 	response := helper.APIResponse("Account has been registered", http.StatusOK, "success", formatter)
 	// return json
 	c.JSON(http.StatusOK, response)
+}
+
+func (h *userHandler) Login(c *gin.Context) {
+	// user memasukkan input form (email & password)
+	// input menangkap handler
+	// mapping dari input user ke input struct
+	// input struct passing to service
+	// di service mencari bantuan repository dengan input email
+	var input user.LoginUserInput
+	err := c.ShouldBindJSON(&input)
+	if err != nil {
+		errors := helper.FormatValidationError(err)
+		errorMessage := gin.H{"errors": errors}
+		response := helper.APIResponse("Login failed", http.StatusUnprocessableEntity, "error", errorMessage)
+		c.JSON(http.StatusBadRequest, response)
+		return
+	}
+	loggedUser, err := h.userService.LoginUser(input)
+	if err != nil {
+		errorMessage := gin.H{"errors": err.Error()}
+		response := helper.APIResponse("Login failed", http.StatusUnprocessableEntity, "error", errorMessage)
+		c.JSON(http.StatusBadRequest, response)
+		return
+	}
+
+	// format response
+	formatter := user.FormatUser(loggedUser, "asdasduhquwehasdkfjokjASDJKOJAORIJA;KLFSDJGOIERFIUHAKJSDNFKJNWEOIDRJOADNSLKJASL;KD")
+	// api response
+	response := helper.APIResponse("Login Successfuly!", http.StatusOK, "success", formatter)
+	// return json
+	c.JSON(http.StatusOK, response)
+
 }
