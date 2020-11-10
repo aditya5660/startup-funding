@@ -3,6 +3,7 @@ package handler
 import (
 	"fmt"
 	"net/http"
+	"startup-funding/auth"
 	"startup-funding/helper"
 	"startup-funding/user"
 
@@ -11,10 +12,11 @@ import (
 
 type userHandler struct {
 	userService user.Service
+	authService auth.Service
 }
 
-func NewUserHandler(userService user.Service) *userHandler {
-	return &userHandler{userService}
+func NewUserHandler(userService user.Service, authService auth.Service) *userHandler {
+	return &userHandler{userService, authService}
 }
 
 func (h *userHandler) Register(c *gin.Context) {
@@ -38,9 +40,15 @@ func (h *userHandler) Register(c *gin.Context) {
 		return
 	}
 	// get token
-	// token,err := h.jwtService.GenerateToken()
+	token, err := h.authService.GenerateToken(newUser.ID)
+	if err != nil {
+		response := helper.APIResponse("Register Account failed", http.StatusBadRequest, "error", nil)
+		c.JSON(http.StatusBadRequest, response)
+		return
+	}
+
 	// format response
-	formatter := user.FormatUser(newUser, "asdasduhquwehasdkfjokjASDJKOJAORIJA;KLFSDJGOIERFIUHAKJSDNFKJNWEOIDRJOADNSLKJASL;KD")
+	formatter := user.FormatUser(newUser, token)
 	// api response
 	response := helper.APIResponse("Account has been registered", http.StatusOK, "success", formatter)
 	// return json
@@ -69,9 +77,14 @@ func (h *userHandler) Login(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, response)
 		return
 	}
-
+	token, err := h.authService.GenerateToken(loggedUser.ID)
+	if err != nil {
+		response := helper.APIResponse("Login failed", http.StatusBadRequest, "error", nil)
+		c.JSON(http.StatusBadRequest, response)
+		return
+	}
 	// format response
-	formatter := user.FormatUser(loggedUser, "asdasduhquwehasdkfjokjASDJKOJAORIJA;KLFSDJGOIERFIUHAKJSDNFKJNWEOIDRJOADNSLKJASL;KD")
+	formatter := user.FormatUser(loggedUser, token)
 	// api response
 	response := helper.APIResponse("Login successfuly!", http.StatusOK, "success", formatter)
 	// return json
