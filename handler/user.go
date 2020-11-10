@@ -48,11 +48,11 @@ func (h *userHandler) Register(c *gin.Context) {
 
 func (h *userHandler) Login(c *gin.Context) {
 	// user memasukkan input form (email & password)
-	// input menangkap handler
+	
 	// mapping dari input user ke input struct
-	// input struct passing to service
-	// di service mencari bantuan repository dengan input email
+	
 	var input user.LoginUserInput
+	// input menangkap handler
 	err := c.ShouldBindJSON(&input)
 	if err != nil {
 		errors := helper.FormatValidationError(err)
@@ -61,6 +61,8 @@ func (h *userHandler) Login(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, response)
 		return
 	}
+	// input struct passing to service
+	// di service mencari bantuan repository dengan input email
 	loggedUser, err := h.userService.LoginUser(input)
 	if err != nil {
 		errorMessage := gin.H{"errors": err.Error()}
@@ -76,4 +78,15 @@ func (h *userHandler) Login(c *gin.Context) {
 	// return json
 	c.JSON(http.StatusOK, response)
 
+}
+
+func (h *userHandler) Fetch(c *gin.Context) {
+	// get current user
+	currentUser:= c.MustGet("currentUser").(user.User)
+	// format response
+	formatter := user.FormatUser(currentUser,"asdjhajksdhkljahsdlkjhalkjsdhajkhsdkjhasdkljhalkds")
+	// api response
+	response := helper.APIResponse("Successfuly fetch user data",http.StatusOK,"success",formatter)
+	// return json
+	c.JSON(http.StatusOK, response)
 }
