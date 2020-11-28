@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"startup-funding/auth"
+	"startup-funding/campaign"
 	"startup-funding/handler"
 	"startup-funding/helper"
 	"startup-funding/user"
@@ -40,6 +41,19 @@ func main() {
 	}
 
 	userRepository := user.NewRepository(db)
+	campaignRepository := campaign.NewRepository(db)
+	campaigns, err := campaignRepository.FindByUserID(2)
+
+	fmt.Println("debug")
+	fmt.Println("debug")
+	fmt.Println("debug")
+	for _, campaign := range campaigns {
+		fmt.Println(campaign.Name)
+		if len(campaign.CampaignImages) > 0 {
+			fmt.Println(campaign.CampaignImages[0].FileName)
+		}
+
+	}
 	userService := user.NewService(userRepository)
 	authService := auth.NewService()
 

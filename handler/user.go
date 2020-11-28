@@ -105,11 +105,6 @@ func (h *userHandler) Fetch(c *gin.Context) {
 
 func (h *userHandler) CheckEmailAvailability(c *gin.Context) {
 	// ada input email dari user
-	// input email di-mapping ke struct input
-	// struct input di-passing ke service
-	// service akan memanggil repository - email sudah ada apa belum
-	// repository akan search query ke db
-
 	var input user.CheckEmailInput
 	err := c.ShouldBindJSON(&input)
 	if err != nil {
@@ -119,7 +114,7 @@ func (h *userHandler) CheckEmailAvailability(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, response)
 		return
 	}
-
+	// input email di-mapping ke struct input
 	isEmailAvailable, err := h.userService.IsEmailAvailable(input)
 	if err != nil {
 		errorMessage := gin.H{"errors": "Server Error"}
@@ -127,7 +122,6 @@ func (h *userHandler) CheckEmailAvailability(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, response)
 		return
 	}
-
 	data := gin.H{
 		"is_available": isEmailAvailable,
 	}
