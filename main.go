@@ -44,14 +44,13 @@ func main() {
 	campaignRepository := campaign.NewRepository(db)
 	userService := user.NewService(userRepository)
 	campaignService := campaign.NewService(campaignRepository)
-
-	campaigns, _ := campaignService.FindCampaigns(1)
-	fmt.Println(campaigns)
 	authService := auth.NewService()
 
+	campaignHandler := handler.NewCampaignHandler(campaignService)
 	userHandler := handler.NewUserHandler(userService, authService)
 
 	router := gin.Default()
+	router.Static("/public/images", "./public/images")
 	api := router.Group("/api/v1")
 
 	api.POST("/users", userHandler.Register)
@@ -59,6 +58,8 @@ func main() {
 	api.POST("/users/fetch", userHandler.Fetch)
 	api.POST("/email_checkers", userHandler.CheckEmailAvailability)
 	api.POST("/avatars", authMiddleware(authService, userService), userHandler.UploadAvatar)
+	api.GET("/campaigns", campaignHandler.GetCampaigns)
+	api.GET("/campaigns/::id", campaignHandler.GetCampaign)
 	router.Run()
 }
 func authMiddleware(authService auth.Service, userService user.Service) gin.HandlerFunc {
